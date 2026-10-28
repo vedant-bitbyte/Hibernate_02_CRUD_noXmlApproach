@@ -1,17 +1,68 @@
 package com.main;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
+import org.hibernate.jpa.HibernatePersistenceProvider;
+
 import com.entity.Employee;
+import com.impl.PersistenceUnitInfoImpl;
 
 public class Launch {
 
 	public static void main(String[] args) {
 		
-		EntityManagerFactory emf = Persistence.createEntityManagerFactory("config");
+		Properties properties = new Properties();
+		InputStream is = null;
+		
+		try {
+			is = Launch.class.getClassLoader().getResourceAsStream("config.properties");
+			
+			if (is == null) {
+				System.out.println("File not found");
+				return;
+			}
+			
+			properties.load(is);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			
+		} finally {
+			if (is != null) {
+				
+				try {
+					is.close();
+					
+				} catch (IOException e) {
+					e.printStackTrace();
+					
+				}
+			}
+		}
+		
+		Map<String, String> map = new HashMap<>();
+		
+		for (String key : properties.stringPropertyNames()) {
+			map.put(key, properties.getProperty(key));
+			
+		}
+		
+		// So here we are not using any xml file, but we are taking control using config.properties, where we store the property
+		// So here, we need to create an obj of HibernatePersistenceProvider and call the createContainerEntityManagerFactory method
+		// that takes the PersistenceUnitInfoImpl obj and a map that we have created using the properties
+		
+		EntityManagerFactory emf = new HibernatePersistenceProvider()
+				.createContainerEntityManagerFactory(new PersistenceUnitInfoImpl(), map);
+		
 		EntityManager em = emf.createEntityManager();
 		
 		insert(em);
